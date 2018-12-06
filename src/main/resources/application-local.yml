@@ -1,0 +1,10 @@
+datasource:
+  jdbc:
+    url: jdbc:mysql://localhost:3306/estore
+    username: root
+    password:
+    driverClassName: com.mysql.jdbc.Driver
+
+
+endpoint.user.auth: http://localhost:8686/user-svc/v1/user/auth
+endpoint.guest.auth: http://localhost:8686/user-svc/v1/user/guest

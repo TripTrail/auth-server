@@ -22,22 +22,12 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    // tag::jetty[]
-    compile("org.springframework.boot:spring-boot-starter-web") {
-        exclude module: "spring-boot-starter-tomcat"
-    }
-    compile("org.springframework.boot:spring-boot-starter-jetty")
-    // end::jetty[]
-    // tag::actuator[]
-    compile("org.springframework.boot:spring-boot-starter-actuator")
-    // end::actuator[]
-
-    compile(group: 'org.springframework.boot', name: 'spring-boot-starter-security')
-    compile group: 'org.springframework.security.oauth', name: 'spring-security-oauth2', version: '2.0.6.RELEASE'
-    compile group: 'org.springframework', name: 'spring-jdbc', version: '4.3.8.RELEASE'
-
-    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.6'
-
-    compile project(':app-commons')
+    compile('org.springframework.boot:spring-boot-starter-data-jpa')
+    compile('org.springframework.boot:spring-boot-starter-jdbc')
+    compile('org.springframework.boot:spring-boot-starter-web')
+    compile('org.springframework.boot:spring-boot-starter-validation')
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.1.0.RELEASE'
+    compile group: 'org.springframework.security.oauth', name: 'spring-security-oauth2', version: '2.3.4.RELEASE'
+    runtime ('org.postgresql:postgresql')
 
 }

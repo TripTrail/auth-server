@@ -1,12 +1,16 @@
-package com.estore.config;
+package com.company.application.authserver.config;
 
+import static com.company.application.authserver.constant.Constant.*;
+
+import com.company.application.co.APIResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.DatabasePopulator;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -16,55 +20,49 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.A
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
-import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
-import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 
 import javax.sql.DataSource;
-
-/**
- * Created by Ashutosh on 27 Jun, 2017.
- *
- */
 
 @Configuration
 @EnableAuthorizationServer
 public class AuthServerConfig extends AuthorizationServerConfigurerAdapter{
 
     @Autowired
-    @Qualifier("authenticationManagerBean")
+    @Qualifier(AUTH_MANAGER_BEAN)
     private AuthenticationManager authenticationManager;
 
-    @Override
-    public void configure(
-            AuthorizationServerSecurityConfigurer oauthServer)
-            throws Exception {
-        oauthServer
-                .tokenKeyAccess("permitAll()")
-                .checkTokenAccess("isAuthenticated()");
-    }
-
-    @Value("${security.oauth2.client.client-id}")
+    @Value(OAUTH_CLIENT_ID)
     private String clientId;
-    @Value("${security.oauth2.client.client-secret}")
+
+    @Value(OAUTH_CLIENT_SECRET)
     private String secret;
-    @Value("${security.oauth2.client.authorized-grant-types}")
-    private String [] grantType;
-    @Value("${security.oauth2.client.scope}")
-    private String [] scope;
-    @Value("${security.oauth2.client.access-token-validity-seconds}")
+
+    @Value(OAUTH_CLIENT_GRANT_TYPES)
+    private String[] grantType;
+
+    @Value(OAUTH_CLIENT_SCOPE)
+    private String[] scope;
+
+    @Value(OAUTH_CLIENT_ACCESS_TOKEN_VALIDITY)
     private int accessTokenValidity;
-    @Value("${security.oauth2.client.refresh-token-validity-seconds}")
+
+    @Value(OAUTH_CLIENT_REFRESH_TOKEN_VALIDITY)
     private int refreshTokenValidity;
 
     @Autowired
-    @Qualifier("dataSource")
+    @Qualifier(DATASOURCE)
     private DataSource dataSource;
+
+    @Bean
+    public TokenStore tokenStore() {
+        return new JdbcTokenStore(dataSource);
+    }
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients)
-            throws Exception {
+      throws Exception {
         clients.jdbc(dataSource)
                 .withClient(clientId)
                 .secret(secret)
@@ -78,38 +76,37 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter{
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints
                 .tokenStore(tokenStore())
-                .authenticationManager(authenticationManager);
+                .authenticationManager(authenticationManager)
+                .exceptionTranslator(exception -> {
+                    APIResponse<String> response = new APIResponse<>(false, exception.getMessage(), NULL);
+                    return new ResponseEntity(response, HttpStatus.OK);
+                });
+    }
+
+    @Override
+    public void configure(AuthorizationServerSecurityConfigurer oauthServer)
+            throws Exception {
+        oauthServer
+                .tokenKeyAccess("permitAll()")
+                .checkTokenAccess("isAuthenticated()");
     }
 
     @Bean
-    @Primary
-    public ResourceServerTokenServices tokenServices() {
-        DefaultTokenServices tokenServices = new DefaultTokenServices();
-        tokenServices.setSupportRefreshToken(true);
-        tokenServices.setTokenStore(tokenStore());
-        return tokenServices;
-    }
-
-    @Bean
-    public TokenStore tokenStore(){
-        return new JdbcTokenStore(dataSource);
-    }
-
-    @Bean
-    public DataSourceInitializer dataSourceInitializer(DataSource dataSource) {
+    public DataSourceInitializer dataSourceInitializer(
+            @Qualifier(DATASOURCE) DataSource dataSource) {
         DataSourceInitializer initializer = new DataSourceInitializer();
         initializer.setDataSource(dataSource);
         initializer.setDatabasePopulator(databasePopulator());
         return initializer;
     }
 
-    @Value("classpath:schema.sql")
+    @Value(SCHEMA_SCRIPT)
     private Resource schemaScript;
 
     private DatabasePopulator databasePopulator() {
-        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        populator.addScript(schemaScript);
-        return populator;
+        ResourceDatabasePopulator databasePopulator = new ResourceDatabasePopulator();
+        databasePopulator.addScript(schemaScript);
+        return databasePopulator;
     }
 
 }

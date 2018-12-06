@@ -1,10 +1,25 @@
-datasource:
-  jdbc:
-    url: jdbc:mysql://localhost:3306/estore
-    username: root
-    password:
-    driverClassName: com.mysql.jdbc.Driver
+# Spring Database Configuration
+spring:
+  jpa:
+    database: POSTGRESQL
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tripdb
+    username: postgres
+    password: locked
 
 
-endpoint.user.auth: http://localhost:8686/user-svc/v1/user/auth
-endpoint.guest.auth: http://localhost:8686/user-svc/v1/user/guest
+#OAuth 2 Configuration
+security:
+  oauth2:
+    client:
+      client-id: TT_CLIENT_ID
+      client-secret: TT_CLIENT_SECRET
+      authorized-grant-types: password, refresh_token
+      scope: read, write, trust
+      access-token-validity-seconds: 3600
+      refresh-token-validity-seconds: 315360000
